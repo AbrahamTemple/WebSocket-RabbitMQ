@@ -1,0 +1,24 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: olife-websocket
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+  rabbitmq:
+    host: 127.0.0.1
+    username: admin
+    password: admin
+    virtual-host: /
+    port: 5672
+
+  thymeleaf:
+    cache: false
+
+  mvc:
+    view:
+      prefix: classpath:/static/
+      suffix: .html
