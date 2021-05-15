@@ -2,7 +2,7 @@
 
 ## 代码指引
 
-- javascript连接websocket(websocket.js)
+- javascript连接websocket（websocket.js）
 
 ``` javascript
 function createWebSocket() {
@@ -19,7 +19,7 @@ function createWebSocket() {
 }
 ```
 
-- RabbitMQ发布业务消息(SendMessageServiceImpl.java)
+- RabbitMQ发布业务消息（SendMessageServiceImpl.java）
 
 ``` java
 @Override
@@ -35,7 +35,7 @@ public String send(MsgDTO msgDTO) {
 }
 ```
 
-- RabbitMQ监听业务消息(RabbitReceiver.java)
+- RabbitMQ监听业务消息（RabbitReceiver.java）
 
 ``` java
 @RabbitHandler
@@ -49,7 +49,7 @@ public void WsReceiver(String msg) throws IOException {
 }
 ```
 
-- WebSocket实现对用户发送消息的最终业务
+- WebSocket实现对用户发送消息的最终业务（SendMessageServiceImpl.java）
 
 ``` java
 @Override
