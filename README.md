@@ -67,6 +67,35 @@ public void sendToUser(MsgDTO msgDTO) {
 }
 ```
 
+- 从网页推送消息到服务器转发（vue.html）
+
+``` vue
+let vm = new Vue({
+    el: "#app",
+    data: {
+        selected: '',
+        sendBtn: "发给服务器",
+        messageTitle: "来自服务器的消息",
+        selectedTitle:"要推送的用户",
+        opList:[1,2,3,4,5,6]
+    },
+    methods: {
+        sendMessageBody: function () {
+            //如果指定发送对象就定点推送，如果没有则群发
+            let personList=this.selected!==''?[userId,this.selected]:[];
+            let data = {
+                "persons": personList,
+                "msg": $('#send-body').val()
+            };
+            wsObj.send(JSON.stringify(data));
+        },
+    },
+    mounted(){
+        createWebSocket();
+    }
+});
+```
+
 ## 测试
 
 - postman发送请求执行定点推送,目标id为1和2
@@ -82,3 +111,13 @@ public void sendToUser(MsgDTO msgDTO) {
 - userId为3的并没有收到消息
 
 ![Screenshot](docs/userId3.png)
+
+## Vue版
+
+- 定点与群发
+
+![Screenshot](docs/vueUserId1.png)
+
+![Screenshot](docs/vueUserId2.png)
+
+![Screenshot](docs/vueUserId3.png)
