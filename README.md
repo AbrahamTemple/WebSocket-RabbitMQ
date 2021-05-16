@@ -39,7 +39,7 @@ public String send(MsgDTO msgDTO) {
 
 ``` java
 @RabbitHandler
-@RabbitListener(queues = "ws_queue")
+@RabbitListener(queues = RabbitConfig.FANOUT_QUEUE)
 @OnMessage
 public void WsReceiver(String msg) throws IOException {
   log.info("Ws已接收到消息---"+msg);
