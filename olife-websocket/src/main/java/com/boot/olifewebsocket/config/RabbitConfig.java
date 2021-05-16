@@ -34,5 +34,4 @@ public class RabbitConfig {
     public Binding websocketBinding(){
         return BindingBuilder.bind(websocketQueue()).to(websocketExchange());
     }
-
 }

@@ -11,32 +11,34 @@ function createWebSocket() {
         wsObj = new WebSocket(wsUri);
         initWsEvent();
     } catch (e) {
-        setMessageBody("创建失败:"+e);
+        getMessageBody("创建失败:"+e);
     }
 }
 
 function initWsEvent() {
     try {
         wsObj.onopen = function (event) {
-            setMessageBody("WebSocket连接成功");
+            getMessageBody("WebSocket连接成功");
         };
         wsObj.onmessage = function (event) {
-            setMessageBody(event.data);
+            getMessageBody(event.data);
+            $('#msg-body').html(event.data);
         };
         wsObj.onclose = function (event) {
-            setMessageBody("执行关闭事件，开始重连");
+            getMessageBody("执行关闭事件，开始重连");
         };
         wsObj.onerror = function (event) {
-            setMessageBody("执行发生错误，开始重连");
+            getMessageBody("执行发生错误，开始重连");
         };
     }catch (e) {
-        setMessageBody("连接失败:"+e);
+        getMessageBody("连接失败:"+e);
     }
 }
 
-function setMessageBody(body){
+function getMessageBody(body){
     console.log(body);
 }
+
 /**
  * @return {string}
  */

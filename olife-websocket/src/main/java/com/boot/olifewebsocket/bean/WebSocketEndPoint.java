@@ -4,6 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.boot.olifewebsocket.config.RabbitConfig;
 import com.boot.olifewebsocket.entity.MsgDTO;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +19,11 @@ import javax.annotation.Resource;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @version 6.1.8
@@ -83,7 +89,11 @@ public class WebSocketEndPoint {
         String msg = JSON.toJSONString(msgDTO);
         log.info("消息：{}", msg);
         msg = msg.replace("\\t", "").replace("\\n", "");
-        amqpTemplate.convertAndSend(RabbitConfig.FANOUT_EXCHANGE,RabbitConfig.FANOUT_QUEUE,msg);
+        if(amqpTemplate!=null) {
+            amqpTemplate.convertAndSend(RabbitConfig.FANOUT_EXCHANGE, RabbitConfig.FANOUT_QUEUE, msg);
+        } else {
+            connectRabbitmq(msg);
+        }
         log.info("{}", "消息为空，不进行发送");
     }
 
@@ -133,6 +143,46 @@ public class WebSocketEndPoint {
     public static void batchSend(String message) {
         for (String sessionId : SESSION_MAP.keySet()) {
             SESSION_MAP.get(sessionId).getAsyncRemote().sendText(message);
+        }
+    }
+
+    /**
+     * 离开反应堆的连接工厂
+     */
+    public void connectRabbitmq(String message){
+        ConnectionFactory connectionFactory = new ConnectionFactory();
+        connectionFactory.setHost("127.0.0.1");
+        connectionFactory.setPort(5672);
+        connectionFactory.setUsername("admin");
+        connectionFactory.setPassword("admin");
+        connectionFactory.setVirtualHost("/");
+
+        Connection connection = null;
+        Channel channel = null;
+
+        try {
+            //使用装配好属性的连接工厂进行连接
+            connection = connectionFactory.newConnection(session.getId());
+            channel = connection.createChannel();
+            channel.basicPublish(RabbitConfig.FANOUT_EXCHANGE,RabbitConfig.FANOUT_QUEUE,null,message.getBytes());
+
+        } catch (IOException | TimeoutException e) {
+            e.printStackTrace();
+        } finally {
+            if(channel != null && channel.isOpen()){
+                try {
+                    channel.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            if(connection != null && connection.isOpen()){
+                try {
+                    connection.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 }
