@@ -69,7 +69,7 @@ public void sendToUser(MsgDTO msgDTO) {
 
 - 从网页推送消息到服务器转发（vue.html）
 
-``` vue
+``` javascript
 let vm = new Vue({
     el: "#app",
     data: {
