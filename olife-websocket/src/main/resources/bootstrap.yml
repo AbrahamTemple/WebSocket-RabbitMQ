@@ -1,0 +1,24 @@
+server:
+  port: 8083
+
+spring:
+  profiles:
+    active: dev
+  application:
+    name: olife-websocket
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${spring.cloud.nacos.discovery.ip}:${spring.cloud.nacos.discovery.port}
+        ip: 124.71.185.137
+        port: 8848
+      config:
+        server-addr: ${spring.cloud.nacos.discovery.server-addr}
+        file-extension: yaml #文件扩展名
+        group: OLIFE_GROUP
+  rabbitmq:
+    host: 121.36.204.21
+    username: admin
+    password: 3626356
+    virtual-host: /
+    port: 5672

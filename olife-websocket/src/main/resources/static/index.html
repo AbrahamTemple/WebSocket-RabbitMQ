@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="./js/jquery-3.5.1.js"></script>
+    <script src="./js/websocket.js"></script>
+    <style>
+        [v-clock]{
+            display: none; /* 解决延迟闪烁现象 */
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <input type="text" id="send-body"/>
+        <select v-model="selected">
+            <option value="" disabled>---请选择用户---</option>
+            <option :id="'op'+index" v-for="(item,index) in opList" key="index">{{item}}</option>
+        </select>
+        <button id="on-send" @click="sendMessageBody" v-clock>{{sendBtn}}</button>
+        <br/>
+        <p style="color:deeppink" v-clock><b>{{selectedTitle}}:</b></p>
+        <span style="color: red" v-clock>{{selected}}</span>
+        <br/>
+        <strong style="color: orange" v-clock>在线时长:{{myHours}}:{{myMinutes}}:{{mySeconds}}</strong>
+        <br/>
+        <strong style="color: chartreuse" v-clock>{{messageTitle}}:</strong>
+        <br/>
+        <span id="msg-body" style="color:dodgerblue"></span>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.min.js"></script>
+    <script>
+        let vm = new Vue({
+            el: "#app",
+            data: {
+                selected: '',
+                sendBtn: "发给服务器",
+                messageTitle: "来自服务器的消息",
+                selectedTitle:"要推送的用户",
+                opList:[1,2,3,4,5,6],
+                currentTime:0,
+                timeObj: null, // 时间对象,下方会用到
+                myHours: '00', // 我定义来接收计算出来的 小时 的
+                myMinutes: '00', // 我定义来接收计算出来的 分钟 的
+                mySeconds: '00'// 我定义来接收计算出来的 秒钟 的
+            },
+            methods: {
+                sendMessageBody: function () {
+                    //如果指定发送对象就定点推送，如果没有则群发
+                    let personList=this.selected!==''?[userId,this.selected]:[];
+                    let data = {
+                        "persons": personList,
+                        "msg": $('#send-body').val(),
+                        "ism": true
+                    };
+                    wsObj.send(JSON.stringify(data));
+                },
+                countTime: function () {
+                    console.log("sdf");
+                    this.timeFunction();
+                    setInterval(() => {
+                        this.timeFunction();
+                    }, 1000)
+                },
+                timeFunction: function () {
+                    // 开始执行倒计时
+                    this.timeObj = { // 时间对象
+                        seconds: Math.floor(this.currentTime % 60),
+                        minutes: Math.floor(this.currentTime / 60) % 60,
+                        hours: Math.floor(this.currentTime / 60 / 60) % 24
+                    };
+                    // 计算出时分秒
+                    this.myHours = this.timeObj.hours<10?'0'+this.timeObj.hours:this.timeObj.hours;
+                    this.myMinutes = this.timeObj.minutes<10?'0'+this.timeObj.minutes:this.timeObj.minutes;
+                    this.mySeconds = this.timeObj.seconds<10?'0'+this.timeObj.seconds:this.timeObj.seconds;
+                    this.currentTime++;
+                }
+            },
+            mounted(){
+                createWebSocket();
+                this.countTime();
+            }
+        });
+    </script>
+</body>
+</html>
