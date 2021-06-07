@@ -19,51 +19,78 @@ function createWebSocket() {
 }
 ```
 
-- RabbitMQ发布业务消息（SendMessageServiceImpl.java）
+- RabbitMQ推送消息（WebSockert服务端）
 
 ``` java
-@Override
-public String send(MsgDTO msgDTO) {
-  String message = msgDTO.getMsg();
-  if (StringUtils.hasText(message)) {
-    String msg = JSON.toJSONString(msgDTO);
-    msg = msg.replace("\\t","").replace("\\n","");
-    amqpTemplate.convertAndSend(RabbitConfig.FANOUT_EXCHANGE,"",msg);
-    return ResultEnum.SEND_SUCCESS.getTitle();
+@OnMessage
+public void onMessage(String message) {
+  JSONObject object = JSON.parseObject(message);
+  MsgDto msgDTO = JSON.toJavaObject(object, MsgDto.class);
+  if (ObjectUtils.isEmpty(msgDTO) || !StringUtils.hasText(msgDTO.getMsg())) {
+    return;
   }
-  return ResultEnum.SEND_NULL.getTitle();
+  if (msgDTO.getMsg().length()<1){
+    log.info("{}", "消息为空，不进行发送");
+    return;
+  }
+  String msg = JSON.toJSONString(msgDTO);
+  log.info("WS已收到消息---{}", msg);
+  msg = msg.replace("\\t", "").replace("\\n", "");
+  if(amqpTemplate!=null) {
+    amqpTemplate.convertAndSend(RabbitConfig.FANOUT_EXCHANGE, RabbitConfig.FANOUT_QUEUE, msg);
+  } else {
+    connectRabbitmq(msg);
+  }
 }
 ```
 
-- RabbitMQ监听业务消息（RabbitReceiver.java）
+- RabbitMQ监听业务消息（Base服务端）
 
 ``` java
 @RabbitHandler
-@RabbitListener(queues = RabbitConfig.FANOUT_QUEUE)
+@RabbitListener(queues = "advisory_queue")
 @OnMessage
 public void WsReceiver(String msg) throws IOException {
-  log.info("Ws已接收到消息---"+msg);
+  log.info("MQ已接收到消息---"+msg);
   JSONObject object  = JSON.parseObject(msg);
-  MsgDTO msgDTO = JSON.toJavaObject(object, MsgDTO.class);
-  sendMessageService.sendToUser(msgDTO);
-}
+  MsgDto msgDto = JSON.toJavaObject(object, MsgDto.class);
+  OAdvisory advisory;
+  if(msgDto.getIsm()){
+    advisory = new OAdvisory(Long.valueOf(msgDto.getPersons().get(1)),Long.valueOf(msgDto.getPersons().get(0)),msgDto.getMsg());
+  } else {
+    advisory = new OAdvisory(Long.valueOf(msgDto.getPersons().get(0)),Long.valueOf(msgDto.getPersons().get(1)),msgDto.getMsg());
+  }
+    advisoryService.save(advisory);
+  }
+}  
 ```
 
-- WebSocket实现对用户发送消息的最终业务（SendMessageServiceImpl.java）
+- WebSocket实现对用户发送消息的最终业务（WebSocketEndPoint.java）
 
 ``` java
-@Override
-public void sendToUser(MsgDTO msgDTO) {
-  List<String> persons = msgDTO.getPersons();
-  String message = msgDTO.getMsg();
-  if (!StringUtils.hasText(message)) {
-    return;
+/**
+ * 定点
+ * @param userId  用户id
+ * @param message 消息
+ */
+public static void send(String userId, String message) {
+  log.info("{}", userId);
+  if (SESSION_MAP.containsKey(userId)) {
+    SESSION_MAP.get(userId).getAsyncRemote().sendText(message);
+    log.info("消息发送成功");
+  } else {
+    log.info("服务器找不到此Session");
   }
-  if (ObjectUtils.isEmpty(persons)) {
-    WebSocketEndPoint.batchSend(message);
-    return;
+}
+
+/**
+ * 群发
+ * @param message 消息
+ */
+public static void batchSend(String message) {
+  for (String sessionId : SESSION_MAP.keySet()) {
+    SESSION_MAP.get(sessionId).getAsyncRemote().sendText(message);
   }
-  WebSocketEndPoint.sendToUser(persons,message);
 }
 ```
 
