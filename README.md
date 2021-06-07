@@ -1,5 +1,9 @@
 # WebSocket搭配RabbitMQ实现分布式广播或定点推送消息
 
+## 过程图
+
+![Screenshot](docs/process.png)
+
 ## 代码指引
 
 - javascript连接websocket（websocket.js）
